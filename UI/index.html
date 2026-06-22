@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Requirement Ambiguity Checker</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════
+     NAV
+════════════════════════════════════════════════════ -->
+<nav>
+  <div class="nav-brand" onclick="goTo('home')">Ambiguity<span>Checker</span></div>
+  <div class="nav-links">
+    <button class="nav-btn" id="nav-home"    onclick="goTo('home')">Home</button>
+    <button class="nav-btn" id="nav-llm"     onclick="goTo('llm')">LLM Tool</button>
+    <button class="nav-btn" id="nav-ml"      onclick="goTo('ml')">ML Tool</button>
+    <button class="nav-btn" id="nav-compare" onclick="goTo('compare')">Compare</button>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════
+     HOME PAGE
+════════════════════════════════════════════════════ -->
+<div class="page active" id="page-home">
+  <div class="home-wrap">
+    <div class="home-badge">REQUIREMENT ANALYSIS TOOL · DEMO v0.1</div>
+    <h1 class="home-title">Is your requirement <span>ambiguous?</span></h1>
+    <p class="home-sub">Detect vague, unclear, or ambiguous software requirements using two different AI approaches — and compare their results side by side.</p>
+
+    <div class="tool-cards">
+      <div class="tool-card llm-card" onclick="goTo('llm')">
+        <div class="card-icon">🧠</div>
+        <div class="card-title">LLM Tool <span class="card-arrow">→</span></div>
+        <p class="card-desc">Uses a large language model (Mistral 7B) with RAG-based few-shot examples to detect ambiguity and explain its reasoning.</p>
+        <span class="card-tag">MISTRAL 7B · RAG</span>
+      </div>
+      <div class="tool-card ml-card" onclick="goTo('ml')">
+        <div class="card-icon">⚙️</div>
+        <div class="card-title">ML Tool <span class="card-arrow">→</span></div>
+        <p class="card-desc">Uses a traditional machine learning classifier trained on labelled requirements data to predict ambiguity.</p>
+        <span class="card-tag">TRADITIONAL ML</span>
+      </div>
+    </div>
+
+    <div class="compare-card" onclick="goTo('compare')">
+      <div class="compare-icon">⚖️</div>
+      <div class="compare-text">
+        <div class="card-title">Compare both tools →</div>
+        <p class="card-desc">Run the same requirement through both tools simultaneously and see their verdicts side by side.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     LLM TOOL PAGE
+════════════════════════════════════════════════════ -->
+<div class="page" id="page-llm">
+  <div class="tool-wrap">
+    <div class="tool-header">
+      <div class="tool-title">
+        🧠 LLM Tool
+        <span class="tool-badge llm-badge">MISTRAL 7B · RAG</span>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-label">Total checked</div><div class="stat-value" id="llm-stat-total">0</div></div>
+      <div class="stat-card"><div class="stat-label">Ambiguous</div><div class="stat-value red" id="llm-stat-amb">0</div></div>
+      <div class="stat-card"><div class="stat-label">Clear</div><div class="stat-value green" id="llm-stat-clear">0</div></div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('llm','single')">// single check</button>
+      <button class="tab"        onclick="switchTab('llm','batch')">// batch CSV</button>
+    </div>
+
+    <!-- Single -->
+    <div id="llm-tab-single" class="tab-content active">
+      <div class="main-grid">
+        <div>
+          <div class="panel">
+            <div class="panel-header">// input requirement</div>
+            <div class="input-area">
+              <textarea id="llm-input" placeholder="e.g. The system should respond quickly to user inputs..."></textarea>
+              <div class="btn-row">
+                <button class="btn-primary" id="llm-check-btn" onclick="checkTool('llm')">Analyse</button>
+                <button class="btn-secondary" onclick="clearTool('llm')">Clear</button>
+              </div>
+              <div class="hint">Ctrl+Enter to analyse</div>
+            </div>
+            <div class="loading-state" id="llm-loading"><span class="spinner"></span>Analysing with LLM...</div>
+            <div class="error-msg"  id="llm-error"></div>
+            <div class="result-box" id="llm-result"></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header">// history</div>
+          <div class="history-list" id="llm-history"><div class="empty-state">No checks yet.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Batch -->
+    <div id="llm-tab-batch" class="tab-content">
+      <div class="panel">
+        <div class="panel-header">// batch CSV analysis</div>
+        <div class="drop-zone" id="llm-drop" onclick="document.getElementById('llm-csv-input').click()">
+          <div class="drop-title">📄 Drop CSV file here</div>
+          <div class="drop-sub">or click to browse</div>
+          <input type="file" id="llm-csv-input" accept=".csv" style="display:none" onchange="handleCSV('llm', this.files[0])">
+        </div>
+        <div class="column-picker" id="llm-picker">
+          <div class="picker-label">Select requirements column</div>
+          <div class="picker-row">
+            <select id="llm-col-select"></select>
+            <button class="btn-primary" style="flex:0 0 auto" onclick="startBatch('llm')">Run batch</button>
+            <button class="btn-secondary" onclick="resetCSV('llm')">Reset</button>
+          </div>
+        </div>
+        <div class="csv-preview" id="llm-csv-preview"></div>
+        <div class="error-msg"   id="llm-batch-error"></div>
+        <div class="progress-wrap" id="llm-progress">
+          <div class="progress-label"><span id="llm-prog-text">Processing...</span><span id="llm-prog-count">0/0</span></div>
+          <div class="progress-track"><div class="progress-fill" id="llm-prog-fill"></div></div>
+        </div>
+        <div class="export-row" id="llm-export-row">
+          <button class="btn-export" onclick="exportCSV('llm')">Export results CSV</button>
+        </div>
+        <div class="table-wrap" id="llm-table-wrap">
+          <table class="results-table">
+            <thead><tr><th>#</th><th>Requirement</th><th>Verdict</th><th>Confidence</th><th>Explanation</th></tr></thead>
+            <tbody id="llm-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     ML TOOL PAGE
+════════════════════════════════════════════════════ -->
+<div class="page" id="page-ml">
+  <div class="tool-wrap">
+    <div class="tool-header">
+      <div class="tool-title">
+        ⚙️ ML Tool
+        <span class="tool-badge ml-badge">TRADITIONAL ML</span>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-label">Total checked</div><div class="stat-value" id="ml-stat-total">0</div></div>
+      <div class="stat-card"><div class="stat-label">Ambiguous</div><div class="stat-value red" id="ml-stat-amb">0</div></div>
+      <div class="stat-card"><div class="stat-label">Clear</div><div class="stat-value blue" id="ml-stat-clear">0</div></div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('ml','single')">// single check</button>
+      <button class="tab"        onclick="switchTab('ml','batch')">// batch CSV</button>
+    </div>
+
+    <!-- Single -->
+    <div id="ml-tab-single" class="tab-content active">
+      <div class="main-grid">
+        <div>
+          <div class="panel">
+            <div class="panel-header">// input requirement</div>
+            <div class="input-area">
+              <textarea id="ml-input" placeholder="e.g. The system should respond quickly to user inputs..."></textarea>
+              <div class="btn-row">
+                <button class="btn-primary ml" id="ml-check-btn" onclick="checkTool('ml')">Analyse</button>
+                <button class="btn-secondary" onclick="clearTool('ml')">Clear</button>
+              </div>
+              <div class="hint">Ctrl+Enter to analyse</div>
+            </div>
+            <div class="loading-state" id="ml-loading"><span class="spinner ml"></span>Analysing with ML model...</div>
+            <div class="error-msg"  id="ml-error"></div>
+            <div class="result-box" id="ml-result"></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header">// history</div>
+          <div class="history-list" id="ml-history"><div class="empty-state">No checks yet.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Batch -->
+    <div id="ml-tab-batch" class="tab-content">
+      <div class="panel">
+        <div class="panel-header">// batch CSV analysis</div>
+        <div class="drop-zone ml-drop" id="ml-drop" onclick="document.getElementById('ml-csv-input').click()">
+          <div class="drop-title">📄 Drop CSV file here</div>
+          <div class="drop-sub">or click to browse</div>
+          <input type="file" id="ml-csv-input" accept=".csv" style="display:none" onchange="handleCSV('ml', this.files[0])">
+        </div>
+        <div class="column-picker" id="ml-picker">
+          <div class="picker-label">Select requirements column</div>
+          <div class="picker-row">
+            <select id="ml-col-select"></select>
+            <button class="btn-primary ml" style="flex:0 0 auto" onclick="startBatch('ml')">Run batch</button>
+            <button class="btn-secondary" onclick="resetCSV('ml')">Reset</button>
+          </div>
+        </div>
+        <div class="csv-preview" id="ml-csv-preview"></div>
+        <div class="error-msg"   id="ml-batch-error"></div>
+        <div class="progress-wrap" id="ml-progress">
+          <div class="progress-label"><span id="ml-prog-text">Processing...</span><span id="ml-prog-count">0/0</span></div>
+          <div class="progress-track"><div class="progress-fill ml" id="ml-prog-fill"></div></div>
+        </div>
+        <div class="export-row" id="ml-export-row">
+          <button class="btn-export" onclick="exportCSV('ml')">Export results CSV</button>
+        </div>
+        <div class="table-wrap" id="ml-table-wrap">
+          <table class="results-table">
+            <thead><tr><th>#</th><th>Requirement</th><th>Verdict</th><th>Confidence</th><th>Explanation</th></tr></thead>
+            <tbody id="ml-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     COMPARE PAGE
+════════════════════════════════════════════════════ -->
+<div class="page" id="page-compare">
+  <div class="compare-wrap">
+    <div class="compare-header">
+      <div class="compare-title">⚖️ Compare Tools</div>
+      <div class="compare-sub">Run the same requirement through both tools and see results side by side.</div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" onclick="switchCompareTab('single')">// single check</button>
+      <button class="tab"        onclick="switchCompareTab('batch')">// batch CSV</button>
+    </div>
+
+    <!-- Single tab -->
+    <div id="compare-tab-single" class="tab-content active">
+      <div class="compare-input-box">
+        <textarea id="compare-input" placeholder="Type a requirement to analyse with both tools..."></textarea>
+        <div class="btn-row" style="margin-top:12px">
+          <button class="btn-primary" id="compare-btn" onclick="runCompare()" style="max-width:200px">Run both tools</button>
+          <button class="btn-secondary" onclick="clearCompare()">Clear</button>
+        </div>
+      </div>
+
+      <div class="agree-badge" id="agree-badge"></div>
+
+      <div class="compare-grid">
+        <div class="compare-panel llm-panel">
+          <div class="compare-panel-header">
+            <span>🧠</span>
+            <span class="compare-panel-title llm">LLM Tool</span>
+            <span class="tool-badge llm-badge" style="margin-left:auto">MISTRAL 7B</span>
+          </div>
+          <div class="compare-result" id="compare-llm-result">
+            <div class="compare-empty">Result will appear here</div>
+          </div>
+        </div>
+        <div class="compare-panel ml-panel">
+          <div class="compare-panel-header">
+            <span>⚙️</span>
+            <span class="compare-panel-title ml">ML Tool</span>
+            <span class="tool-badge ml-badge" style="margin-left:auto">TRADITIONAL ML</span>
+          </div>
+          <div class="compare-result" id="compare-ml-result">
+            <div class="compare-empty">Result will appear here</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Batch tab -->
+    <div id="compare-tab-batch" class="tab-content">
+      <div class="panel">
+        <div class="panel-header">// batch CSV — both tools</div>
+
+        <div class="drop-zone" id="compare-drop" onclick="document.getElementById('compare-csv-input').click()">
+          <div class="drop-title">📄 Drop CSV file here</div>
+          <div class="drop-sub">Each row will be analysed by both LLM and ML tool simultaneously</div>
+          <input type="file" id="compare-csv-input" accept=".csv" style="display:none" onchange="handleCompareCSV(this.files[0])">
+        </div>
+
+        <div class="column-picker" id="compare-picker">
+          <div class="picker-label">Select requirements column</div>
+          <div class="picker-row">
+            <select id="compare-col-select"></select>
+            <button class="btn-primary" style="flex:0 0 auto" onclick="startCompareBatch()">Run batch</button>
+            <button class="btn-secondary" onclick="resetCompareCSV()">Reset</button>
+          </div>
+        </div>
+
+        <div class="csv-preview" id="compare-csv-preview"></div>
+        <div class="error-msg"   id="compare-batch-error"></div>
+
+        <div class="progress-wrap" id="compare-progress">
+          <div class="progress-label">
+            <span id="compare-prog-text">Processing...</span>
+            <span id="compare-prog-count">0/0</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" id="compare-prog-fill"></div></div>
+        </div>
+
+        <div class="export-row" id="compare-export-row">
+          <button class="btn-export" onclick="exportCompareCSV()">Export comparison CSV</button>
+        </div>
+
+        <div class="table-wrap" id="compare-table-wrap">
+          <table class="results-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Requirement</th>
+                <th>🧠 LLM Verdict</th>
+                <th>LLM Conf.</th>
+                <th>⚙️ ML Verdict</th>
+                <th>ML Conf.</th>
+                <th>Agreement</th>
+              </tr>
+            </thead>
+            <tbody id="compare-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
