@@ -20,7 +20,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 # ── Load your model once at startup ──────────────────────────────
-model_path = r"C:\Users\HP PAVILION\Downloads\mistral-7b-instruct-v0.2.Q3_K_M.gguf"
+model_path = r"*/*/mistral-7b-instruct-v0.2.Q4_0.gguf" #add your model path here
 llm = AutoModelForCausalLM.from_pretrained(
     model_path,
     model_type="mistral",
