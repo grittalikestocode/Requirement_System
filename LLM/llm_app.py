@@ -44,14 +44,39 @@ example_embeddings = embedder.encode(
 
 AMBIGUITY_TAXONOMY = """\
 Types of ambiguity in software requirements:
-1. PRONOUN AMBIGUITY — pronouns with unclear referents
-2. VAGUE / WEAK LANGUAGE — unmeasurable terms (fast, adequate, sufficient)
-3. MISSING SUBJECT / ACTOR — unclear who performs the action
-4. COORDINATION AMBIGUITY — and/or allows multiple groupings
-5. SCOPE / QUANTIFIER AMBIGUITY — all/each/any with undefined scope
-6. TEMPORAL AMBIGUITY — timing with no defined threshold
-7. CONDITIONAL AMBIGUITY — conditions with multiple interpretations
-8. NEGATION AMBIGUITY — negations with unclear scope
+
+1. PRONOUN AMBIGUITY
+   Pronouns (it, they, their, its, this, these) whose referents are unclear.
+   Example: "The system shall notify the user when it detects an error." → What does 'it' refer to?
+
+2. VAGUE / WEAK LANGUAGE
+   Words like 'fast', 'easy', 'appropriate', 'sufficient', 'adequate', 'user-friendly',
+   'simple', 'flexible', 'robust' that have no measurable definition.
+   Example: "The system shall respond quickly." → How quickly?
+
+3. MISSING SUBJECT / ACTOR
+   It is unclear WHO or WHAT performs an action.
+   Example: "Errors shall be logged." → Logged by whom? When?
+
+4. COORDINATION AMBIGUITY
+   'and' / 'or' that can be grouped in multiple ways.
+   Example: "The system shall support PDF and Word or Excel exports." → (PDF and Word) or Excel? or PDF and (Word or Excel)?
+
+5. SCOPE / QUANTIFIER AMBIGUITY
+   Unclear scope: 'all', 'each', 'any', 'every', 'some', 'most'.
+   Example: "Each user shall have access to all reports." → Does 'all' include restricted reports?
+
+6. TEMPORAL AMBIGUITY
+   Unclear timing: 'when', 'after', 'before', 'during', 'immediately' with no defined threshold.
+   Example: "The system shall update the record after approval." → How long after?
+
+7. CONDITIONAL AMBIGUITY
+   Conditions that can be interpreted in multiple ways.
+   Example: "If the user is logged in and idle or disconnected, the session shall expire."
+
+8. NEGATION AMBIGUITY
+   Negations that create unclear scope.
+   Example: "The system shall not allow users without admin rights and supervisors to delete records."
 """
 
 # ── Warmup ────────────────────────────────────────────────────
@@ -87,18 +112,46 @@ def check(body: CheckRequest):
         prompt = f"""You are an expert software requirements engineer.
 
 {AMBIGUITY_TAXONOMY}
+══ TASK ══
+Analyse the given requirement. Think step-by-step:
+  Step 1 — Identify every word, phrase, pronoun, or structure that could be unclear.
+  Step 2 — Decide which ambiguity type(s) from the taxonomy apply (if any).
+  Step 3 — Classify as "ambiguous" or "unambiguous".
+  Step 4 — Write one concise explanation sentence.
 
-NOTE: Passive voice is STANDARD — do NOT flag it.
-Technical acronyms are NOT ambiguous on their own.
+══ WHAT IS NOT AMBIGUOUS ══
+- Passive voice ("shall be conditioned", "shall be qualified", "shall be provided",
+  "shall be avoided") is STANDARD in requirements engineering — do NOT flag as missing_actor.
+- Technical acronyms and domain terms (MPAS, ERMS, CITIS, GSTSIM, EME, DMS, FTP, SPI)
+  are NOT ambiguous on their own.
+- A requirement with multiple clauses is NOT automatically ambiguous.
+- Words like "other", "related", "associated", "respective" are NOT ambiguous
+  unless their referent is genuinely unclear.
 
-Examples:
+══ WHAT IS AMBIGUOUS ══
+- Pronouns (it, they, their, its, this, these) where the referent is genuinely unclear.
+- Unmeasurable terms (fast, soon, adequate, sufficient, appropriate, user-friendly)
+  with no defined metric or threshold.
+- Coordination (and/or) that allows multiple groupings with different meanings.
+- Missing actor ONLY when it is impossible to infer who performs the action
+  even from context — passive voice alone is NOT enough.
+- Temporal conditions with no defined time threshold.
+
+══ LABELLED EXAMPLES (similar to the test requirement) ══
 {examples_block}
 
-Requirement: "{req}"
+══ RULES ══
+- Output ONLY valid JSON — no markdown, no extra text before or after.
+- "classification" must be exactly "ambiguous" or "unambiguous".
+- "ambiguity_type" must be one of: pronoun, vague_language, missing_actor, coordination,
+  scope_quantifier, temporal, conditional, negation, none.
+- "explanation" must be one clear sentence stating the specific issue found
+  or confirming why the requirement is clear.
+- BEFORE outputting, ask yourself: "Can I point to one specific word or phrase
+  that would cause two developers to implement this differently?"
+  If yes → ambiguous. If no → unambiguous.
 
-Before classifying ask: can I point to one specific word that would cause
-two developers to implement this differently? If yes → ambiguous. If no → unambiguous.
-
+Requirement to classify: "{req}"
 Return ONLY JSON:
 {{"classification": "ambiguous or unambiguous", "ambiguity_type": "pronoun/vague_language/missing_actor/coordination/scope_quantifier/temporal/conditional/negation/none", "confidence": 0.0, "explanation": "one sentence"}}"""
 
