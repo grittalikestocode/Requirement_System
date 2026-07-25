@@ -41,7 +41,7 @@ llm-requirement-analyzer/
 ### Prerequisites
 
 * **Python:** 3.10 or higher
-* **Ollama:**for local LLM inference — Download Ollama
+* **Ollama:** for local LLM inference — Download Ollama [ollama.com](https://ollama.com/download)
 
 ---
 ### Set Up Ollama
