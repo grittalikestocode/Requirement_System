@@ -3,7 +3,7 @@ This script contains all the functions required for the data processing,
 and is to be imported from all the other scripts that require the functions.
 """
 # Imports
-import Imports as lib # contains all the necessary libraries
+import backend.app.core.utils.Imports as lib # contains all the necessary libraries
 
 # Initialize the stemmer
 ps = lib.PorterStemmer()

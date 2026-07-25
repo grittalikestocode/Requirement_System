@@ -1,7 +1,7 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from pydantic import BaseModel
 from typing import List
-from app.core.pdf_extractor import extract_requirements_from_file
+from backend.app.core.pdf_extractor import extract_requirements_from_file
 
 router = APIRouter()
 

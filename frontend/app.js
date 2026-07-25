@@ -18,11 +18,14 @@
 /* ── 1. CONFIG ───────────────────────────────────────
    Consolidated backend endpoints on port 3000
 ─────────────────────────────────────────────────── */
+// const BACKENDS = {
+//   llm: 'http://127.0.0.1:3000/check/llm',
+//   ml:  'http://127.0.0.1:3000/check/ml'
+// };
 const BACKENDS = {
-  llm: 'http://127.0.0.1:3000/check/llm',
-  ml:  'http://127.0.0.1:3000/check/ml'
+  llm: 'http://127.0.0.1:3000/api/check-llm',
+  ml:  'http://127.0.0.1:3000/api/check-ml'
 };
-
 /* ── 2. STATE ────────────────────────────────────────
    All runtime data lives here — one object per tool.
 ─────────────────────────────────────────────────── */
@@ -688,7 +691,8 @@ compareDZ.addEventListener('drop', e => {
    requirements to any ambiguity checker tool.
 ─────────────────────────────────────────────────── */
 
-const PIPELINE_URL = 'http://127.0.0.1:3000/pipeline/upload';
+// const PIPELINE_URL = 'http://127.0.0.1:3000/api/pipeline/upload';
+const PIPELINE_URL = 'http://127.0.0.1:3000/api/upload-pdf';
 
 const pipelineState = {
   file: null,

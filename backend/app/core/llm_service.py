@@ -3,6 +3,11 @@ import json
 import requests
 import pandas as pd
 from sentence_transformers import SentenceTransformer
+from pathlib import Path
+
+# Resolves to `backend/`
+BASE_DIR = Path(__file__).resolve().parents[2]
+DATASET_PATH = BASE_DIR / "data" / "requirements_dataset.csv"
 
 OLLAMA_URL = "http://localhost:11434/api/generate"
 OLLAMA_MODEL = "mistral"
@@ -54,7 +59,7 @@ class LLMService:
         self.embedder = SentenceTransformer("sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
         self.embedder.encode(["Warmup"], show_progress_bar=False)
 
-        self.examples_df = pd.read_csv("requirements_dataset.csv").rename(columns={
+        self.examples_df = pd.read_csv(DATASET_PATH).rename(columns={
             "Context": "requirement",
             "DetectedAs": "label"
         })

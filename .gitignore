@@ -1,0 +1,10 @@
+# Ignore sensitive dataset files
+backend/data/
+*.csv
+*.xlsx
+*.json
+
+__pycache__/
+*.pyc
+.venv/
+.env

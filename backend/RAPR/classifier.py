@@ -394,8 +394,13 @@ MODELS = {
     "NaiveBayes":   ComplementNB(alpha=0.5),
 }
 
-# MODEL_SAVE_PATH = Path("models/trained_classifier.pkl")
-MODEL_SAVE_PATH = Path("C:/Users/HP PAVILION/Downloads/trained_classifier.pkl")
+# Base directory points to `backend/`
+BASE_DIR = Path(__file__).resolve().parents[1]
+
+# RAPR models folder: backend/RAPR/models/
+RAPR_MODELS_DIR = BASE_DIR / "RAPR" / "models"
+
+MODEL_SAVE_PATH = RAPR_MODELS_DIR / "trained_classifier.pkl"
 
 def calculate_per_file_metrics(
         test_indices: np.ndarray,

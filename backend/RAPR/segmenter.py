@@ -12,10 +12,15 @@ from pathlib import Path
 
 from docx import Document
 import fitz  # PyMuPDF
+from pathlib import Path
 
+# Base directory points to `backend/`
+BASE_DIR = Path(__file__).resolve().parents[1]
 
-# MODEL_PATH = Path(__file__).resolve().parents[2] / "models" / "segmenter_model.pkl"
-MODEL_PATH = "C:/Users/HP PAVILION/Downloads/segmenter_model.pkl"
+# RAPR models folder: backend/RAPR/models/
+RAPR_MODELS_DIR = BASE_DIR / "RAPR" / "models"
+
+MODEL_PATH = RAPR_MODELS_DIR / "segmenter_model.pkl"
 
 
 def load_model():

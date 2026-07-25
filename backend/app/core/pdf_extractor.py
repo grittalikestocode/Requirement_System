@@ -4,13 +4,14 @@ import tempfile
 from pathlib import Path
 
 # Setup path for RAPR module
-RAPR_DIR = Path(__file__).resolve().parents[3] / "RAPR"
+RAPR_DIR = Path(__file__).resolve().parents[2] / "RAPR"
+
 if str(RAPR_DIR) not in sys.path:
     sys.path.insert(0, str(RAPR_DIR))
 
 try:
-    from segmenter import segment_document
-    from classifier import classify_document
+    from backend.RAPR.segmenter import segment_document
+    from backend.RAPR.classifier import classify_document
 except ImportError as e:
     print(f"Warning: RAPR modules failed to load: {e}")
 

@@ -1,9 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.pdf_routes import router as pdf_router
-from app.api.ambiguity_routes import router as ambiguity_router
-from app.core.llm_service import llm_service
-from app.core.ml_service import ml_service
+from backend.app.api.pdf_routes import router as pdf_router
+from backend.app.api.ambiguity_routes import router as ambiguity_router
+from backend.app.core.llm_service import llm_service
+from backend.app.core.ml_service import ml_service
 
 app = FastAPI(title="Unified Requirement Engineering API", version="1.0")
 

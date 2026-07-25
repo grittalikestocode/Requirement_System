@@ -1,16 +1,30 @@
+"""
+ML Classifier Service
+--------------------------
+Loads the trained SVC model and TF-IDF vectorizer artifacts to handle text 
+preprocessing, feature extraction, and ambiguity predictions.
+"""
+
 import sys
 import joblib
 import pandas as pd
 from pathlib import Path
 from scipy.sparse import hstack, csr_matrix
 
-sys.path.append('.')
-try:
-    import Imports as lib
-    import Processing as preprocess
-except ImportError:
-    pass
 
+# Ensure parent directory is in sys.path so modules inside app/core/utils can import each other
+UTILS_DIR = Path(__file__).resolve().parent / "utils"
+if str(UTILS_DIR) not in sys.path:
+    sys.path.insert(0, str(UTILS_DIR))
+
+# Import Processing and Imports safely
+try:
+    from app.core.utils import imports as lib
+    from app.core.utils import processing as preprocess
+except ImportError:
+    # Fallback if running directly from utils folder context
+    import imports as lib
+    import processing as preprocess
 class MLService:
     def __init__(self):
         self.vectorizer = None
@@ -18,9 +32,10 @@ class MLService:
         self.feature_gap = 0
 
     def initialize(self):
-        base_path = Path(__file__).resolve().parents[2] / "models"
-        self.vectorizer = joblib.load(base_path / "vectorizer.joblib")
-        self.svc_model = joblib.load(base_path / "svc_model.joblib")
+        # Resolves to `backend/models/`
+        models_path = Path(__file__).resolve().parents[2] / "models"
+        self.vectorizer = joblib.load(models_path / "vectorizer.joblib")
+        self.svc_model = joblib.load(models_path / "svc_model.joblib")
 
         expected_features = self.svc_model.n_features_in_
         vectorizer_features = len(self.vectorizer.vocabulary_)
