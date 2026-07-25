@@ -1,4 +1,4 @@
-# Requirement Analyzer
+# Requirement System Analyzer
 
 An intelligent requirement analysis tool built with **FastAPI**, **Ollama (Mistral 7B)**, and **Scikit-Learn (SVC)**. This application processes contract and agreement PDFs to extract actual requirements and evaluates requirement text for ambiguity using both local LLM and classic Machine Learning models.
 
