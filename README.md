@@ -55,7 +55,7 @@ ollama pull mistral:7b
 **Clone the repository and set up a Python virtual environment**:
 
 ```bash
-git clone [https://github.com/your-username/llm-requirement-analyzer.git](https://github.com/your-username/llm-requirement-analyzer.git)
+git clone https://github.com/grittalikestocode/Requirement_System.git
 cd llm-requirement-analyzer
 
 # Create virtual environment
