@@ -41,10 +41,16 @@ llm-requirement-analyzer/
 ### Prerequisites
 
 * **Python:** 3.10 or higher
-* **Ollama:** Installed locally with the `mistral` model pulled (`ollama pull mistral`)
+* **Ollama:**for local LLM inference — Download Ollama
 
 ---
+### Set Up Ollama
+Make sure Ollama is running and pull the Mistral 7B model:
 
+```bash
+ollama pull mistral:7b
+```
+---
 ### Set Up Virtual Environment & Install Dependencies
 **Clone the repository and set up a Python virtual environment**:
 
@@ -73,5 +79,14 @@ uvicorn backend.app.main:app --reload --port 3000
 * The API will be available at http://127.0.0.1:3000
 * Interactive API Docs (Swagger): http://127.0.0.1:3000/docs
 
-Launch the Frontend
-You can open ```frontend/index.html``` directly in your browser or run it using VS Code Live Server.
+## Launch the Frontend
+You can open ```frontend/index.html``` directly in your browser or run it using VS Code Live Server
+
+## 🔌 API Endpoints Summary
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `POST` | `/api/upload-pdf` | Extract & segment requirements from PDF/DOCX |
+| `POST` | `/api/check-llm` | Contextual ambiguity analysis using Ollama |
+| `POST` | `/api/check-ml` | Classical ML ambiguity classification |
+| `GET` | `/health` | API status check |
