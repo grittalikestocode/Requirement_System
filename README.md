@@ -18,7 +18,7 @@ An intelligent requirement analysis tool built with **FastAPI**, **Ollama (Mistr
 ## 🏗️ Project Architecture
 
 ```text
-llm-requirement-analyzer/
+Requirement_System/
 │
 ├── backend/                  # Python backend core
 │   ├── app/
@@ -29,7 +29,7 @@ llm-requirement-analyzer/
 │   ├── RAPR/                 # Requirement Extraction parser dependencies
 │
 ├── frontend/                 # Web interface (HTML, CSS, JS)
-├── notebooks/                # Experimental research & Jupyter notebooks
+├── Experiments/                # Experimental research & Jupyter notebooks
 ├── .gitignore
 ├── requirements.txt          # Python dependencies
 └── README.md                 # Project documentation
@@ -56,7 +56,7 @@ ollama pull mistral:7b
 
 ```bash
 git clone https://github.com/grittalikestocode/Requirement_System.git
-cd llm-requirement-analyzer
+cd Requirement_System
 
 # Create virtual environment
 python -m venv .venv
