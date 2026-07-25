@@ -64,8 +64,8 @@ source .venv/bin/activate
 # Install dependencies
 pip install -r requirements.txt
 ```
-🏃 Running the Application
-Start the FastAPI backend server from the project root directory:
+## 🏃 Running the Application
+###  Start the FastAPI backend server from the project root directory:
 
 ```bash
 uvicorn backend.app.main:app --reload --port 3000
