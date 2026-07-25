@@ -65,13 +65,13 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 ## 🏃 Running the Application
-###  Start the FastAPI backend server from the project root directory:
+Start the FastAPI backend server from the project root directory:
 
 ```bash
 uvicorn backend.app.main:app --reload --port 3000
 ```
-The API will be available at http://127.0.0.1:3000
-Interactive API Docs (Swagger): http://127.0.0.1:3000/docs
+* The API will be available at http://127.0.0.1:3000
+* Interactive API Docs (Swagger): http://127.0.0.1:3000/docs
 
- Launch the Frontend
+Launch the Frontend
 You can open ```frontend/index.html``` directly in your browser or run it using VS Code Live Server.
