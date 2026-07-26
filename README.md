@@ -70,6 +70,16 @@ source .venv/bin/activate
 # Install dependencies
 pip install -r requirements.txt
 ```
+### ⚠️ Important: Dataset Setup
+
+Because dataset files are excluded from Git to prevent tracking large files, you must add your dataset locally before starting the app:
+
+1. Create a `data` folder inside `backend/` (if it doesn't exist yet):
+   ```bash
+   mkdir -p backend/data
+   ```
+2. Place your dataset file (e.g., requirements_dataset.csv or .xlsx) inside the backend/data/ directory.
+
 ## 🏃 Running the Application
 Start the FastAPI backend server from the project root directory:
 
