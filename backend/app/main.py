@@ -9,7 +9,7 @@ from backend.app.api.pdf_routes import router as pdf_router
 from backend.app.api.ambiguity_routes import router as ambiguity_router
 from backend.app.core.llm_service import llm_service
 from backend.app.core.ml_service import ml_service
-
+from backend.app.core.vector_service import vector_service
 app = FastAPI(
     title="Unified Requirement Engineering API",
     version="1.0"
@@ -46,7 +46,9 @@ def startup_event():
 
     try:
         llm_service.initialize()
+        vector_service.initialize()
         print("LLM Service ready.")
+        print("Vector Service ready.")
     except Exception as e:
         print(e)
 
