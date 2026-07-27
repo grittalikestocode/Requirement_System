@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from backend.app.api.pdf_routes import router as pdf_router
 from backend.app.api.ambiguity_routes import router as ambiguity_router
@@ -7,6 +8,11 @@ from backend.app.core.ml_service import ml_service
 
 app = FastAPI(title="Unified Requirement Engineering API", version="1.0")
 
+@app.get("/", include_in_schema=False)
+def root():
+    # Automatically redirect anyone visiting the base URL to /docs
+    return RedirectResponse(url="/docs")
+    
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
