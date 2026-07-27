@@ -20,6 +20,7 @@
     <button class="nav-btn" id="nav-llm"      onclick="goTo('llm')">LLM Tool</button>
     <button class="nav-btn" id="nav-ml"       onclick="goTo('ml')">ML Tool</button>
     <button class="nav-btn" id="nav-compare"  onclick="goTo('compare')">Compare</button>
+    <button class="nav-btn" id="nav-eval"     onclick="goTo('eval')">Evaluation Dashboard</button>
   </div>
 </nav>
 
@@ -447,6 +448,60 @@
   </div>
 </div>
 
-<script src="/static/app.js"></script>
+<!-- ═══════════════════════════════════════════════════
+     EVALUATION PAGE
+════════════════════════════════════════════════════ -->    
+<div class="page" id="page-eval">
+  <div class="container">
+    <h2>Model Accuracy & Evaluation Suite</h2>
+    <p class="tool-sub">Benchmark LLM and ML ambiguity predictions against ground-truth CSV datasets.</p>
+
+    <div class="panel" style="margin-top:20px;">
+      <div class="drop-zone" onclick="document.getElementById('eval-file-input').click()">
+        <p>📁 Click to upload ground-truth CSV file (Requires columns: <code>Context</code>, <code>DetectedAs</code>)</p>
+        <input type="file" id="eval-file-input" accept=".csv" style="display:none" onchange="loadEvalCSV(event)">
+      </div>
+      <div id="eval-file-info" style="margin-top:10px; font-weight:bold; color:var(--llm)"></div>
+
+      <div style="margin-top:15px; display:flex; gap:10px;">
+        <button class="btn-primary" onclick="startLiveEvaluation('llm')">Evaluate LLM Backend</button>
+        <button class="btn-primary ml" onclick="startLiveEvaluation('ml')">Evaluate ML Backend</button>
+      </div>
+    </div>
+
+    <div class="panel" id="eval-metrics-panel" style="display:none; margin-top:20px;">
+      <h3>Live Metrics Summary</h3>
+      <div style="display:flex; gap:20px; margin-top:10px;">
+        <div>Processed: <span id="eval-processed-count">0 / 0</span></div>
+        <div>Accuracy: <strong id="eval-accuracy-val" style="color:var(--llm)">0%</strong></div>
+        <div>Correct Predictions: <span id="eval-correct-count" style="color:var(--llm)">0</span></div>
+        <div>Mismatches: <span id="eval-wrong-count" style="color:var(--accent)">0</span></div>
+      </div>
+      
+      <div style="width:100%; background:var(--surface2); height:12px; border-radius:6px; margin-top:15px; overflow:hidden; border:1px solid var(--border);">
+        <div id="eval-progress-bar" style="width:0%; background:var(--llm); height:100%; transition: width 0.2s;"></div>
+      </div>
+    </div>
+
+    <div class="panel" id="eval-table-panel" style="display:none; margin-top:20px;">
+      <h3>Predicted vs. Actual Table</h3>
+      <div class="table-wrap visible" style="max-height:450px; overflow-y:auto;">
+        <table class="results-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Requirement Text</th>
+              <th>Actual Label</th>
+              <th>Predicted Label</th>
+              <th>Status</th>
+              <th>Confidence</th>
+            </tr>
+          </thead>
+          <tbody id="eval-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div> </div> <script src="app.js"></script>
 </body>
 </html>

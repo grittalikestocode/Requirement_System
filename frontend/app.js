@@ -918,3 +918,92 @@ function pipelineHideError() {
     if (f) handlePipelineFile(f);
   });
 })();
+
+/* ═══════════════════════════════════════════════════
+   LIVE EVALUATION DASHBOARD LOGIC
+════════════════════════════════════════════════════ */
+let evalData = [];
+
+function loadEvalCSV(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const text = e.target.result;
+    const lines = text.split('\n').filter(l => l.trim().length > 0);
+    
+    evalData = [];
+    for (let i = 1; i < lines.length; i++) {
+      const row = lines[i].split(',');
+      if (row.length >= 2) {
+        const context = row[0].replace(/"/g, '').trim();
+        const detectedAs = row[1].replace(/"/g, '').trim();
+        evalData.push({ text: context, actual: detectedAs });
+      }
+    }
+
+    document.getElementById('eval-file-info').textContent = `Loaded ${evalData.length} labeled test items.`;
+  };
+  reader.readAsText(file);
+}
+
+async function startLiveEvaluation(modelType) {
+  if (evalData.length === 0) {
+    alert("Please upload a labeled CSV dataset first.");
+    return;
+  }
+
+  document.getElementById('eval-metrics-panel').style.display = 'block';
+  document.getElementById('eval-table-panel').style.display = 'block';
+  const tbody = document.getElementById('eval-tbody');
+  tbody.innerHTML = '';
+
+  let correct = 0;
+  let wrong = 0;
+  const endpoint = modelType === 'llm' ? BACKENDS.llm : BACKENDS.ml;
+
+  for (let i = 0; i < evalData.length; i++) {
+    const item = evalData[i];
+    const actualNorm = item.actual.toLowerCase().includes('ambig') ? 'ambiguous' : 'clear';
+
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requirement: item.text })
+      });
+      const data = await res.json();
+      
+      const predictedNorm = data.verdict ? data.verdict.toLowerCase() : 'clear';
+      const isMatch = actualNorm === predictedNorm;
+
+      if (isMatch) correct++;
+      else wrong++;
+
+      const totalProcessed = i + 1;
+      const accuracy = ((correct / totalProcessed) * 100).toFixed(1);
+
+      document.getElementById('eval-processed-count').textContent = `${totalProcessed} / ${evalData.length}`;
+      document.getElementById('eval-accuracy-val').textContent = `${accuracy}%`;
+      document.getElementById('eval-correct-count').textContent = correct;
+      document.getElementById('eval-wrong-count').textContent = wrong;
+      document.getElementById('eval-progress-bar').style.width = `${(totalProcessed / evalData.length) * 100}%`;
+
+      const tr = document.createElement('tr');
+      tr.style.backgroundColor = isMatch ? 'rgba(26, 127, 90, 0.08)' : 'rgba(204, 51, 51, 0.08)';
+      tr.innerHTML = `
+        <td>${i + 1}</td>
+        <td style="max-width:400px; word-break:break-word;">${item.text}</td>
+        <td><strong>${actualNorm.toUpperCase()}</strong></td>
+        <td><strong>${predictedNorm.toUpperCase()}</strong></td>
+        <td>${isMatch ? '✅ MATCH' : '❌ MISMATCH'}</td>
+        <td>${((data.confidence || 0) * 100).toFixed(0)}%</td>
+      `;
+      tbody.prepend(tr);
+
+    } catch (err) {
+      console.error("Evaluation error at row " + i, err);
+    }
+  }
+}

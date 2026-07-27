@@ -32,6 +32,10 @@ body {
 ════════════════════════════════════════════════════ */
 .page         { display: none; min-height: 100vh; }
 .page.active  { display: block; }
+.nav-btn.active-nav {
+  color: var(--text);
+  border-bottom: 2px solid var(--text);
+}
 
 /* ═══════════════════════════════════════════════════
    NAV
