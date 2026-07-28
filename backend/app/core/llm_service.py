@@ -81,17 +81,26 @@ TARGET REQUIREMENT TO ANALYZE:
 
 Task:
 1. Check if the TARGET REQUIREMENT directly contradicts or conflicts with any clause in the DOCUMENT CONTEXT.
-2. Check for linguistic ambiguity using the taxonomy above.
+2. Check for linguistic or general ambiguity using the taxonomy above.
+Note: 
+- Named entities (Canada, DND, RCN, Contractor) are NOT ambiguous — 
+  they refer to defined parties in the contract
+- Acronyms defined in the contract (HCCS, CPP, EGPP, ISS, WBS) 
+  are NOT ambiguous on their own
+  
 Return ONLY JSON:
-{{"classification": "ambiguous or unambiguous", "ambiguity_type": "pronoun/vague_language/missing_actor/coordination/scope_quantifier/temporal/conditional/negation/none","conflict_with": "quote context requirement if applicable, else 'none'", "confidence": 0.9, "explanation": "one sentence"}}"""
+{{"classification": "ambiguous or unambiguous", "ambiguity_type": "pronoun/vague_language/missing_actor/coordination/scope_quantifier/temporal/conditional/negation/none","conflict_with": "quote context requirement if applicable, else 'none'", "confidence": 0.9, "explanation": "Provide a brief explanation of your reasoning."}}"""
 
         raw = self.call_ollama(prompt)
         match = re.search(r'\{.*?\}', raw, re.DOTALL)
         if match:
             parsed = json.loads(match.group())
             lbl = parsed.get("classification", "").strip().lower()
+            # Fixed ordering check:
             if "contradict" in lbl:
                 verdict = "contradiction"
+            elif "unambiguous" in lbl or "clear" in lbl:  # <--- Check unambiguous FIRST!
+                verdict = "clear"
             elif "ambiguous" in lbl:
                 verdict = "ambiguous"
             else:

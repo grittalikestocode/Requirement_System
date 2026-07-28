@@ -920,7 +920,7 @@ function pipelineHideError() {
 })();
 
 /* ═══════════════════════════════════════════════════
-   LIVE EVALUATION DASHBOARD LOGIC
+   LIVE EVALUATION DASHBOARD LOGIC (WITH REASONING)
 ════════════════════════════════════════════════════ */
 let evalData = [];
 
@@ -931,21 +931,70 @@ function loadEvalCSV(event) {
   const reader = new FileReader();
   reader.onload = function(e) {
     const text = e.target.result;
-    const lines = text.split('\n').filter(l => l.trim().length > 0);
-    
+    const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+    if (lines.length < 2) return;
+
+    // Detect delimiter (\t tab vs , comma)
+    const firstLine = lines[0];
+    const delimiter = firstLine.includes('\t') ? '\t' : ',';
+
+    function parseLine(line) {
+      if (delimiter === '\t') {
+        return line.split('\t').map(cell => cell.trim().replace(/^"|"$/g, ''));
+      }
+      const result = [];
+      let current = '';
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        if (char === '"') inQuotes = !inQuotes;
+        else if (char === ',' && !inQuotes) {
+          result.push(current.trim().replace(/^"|"$/g, ''));
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+      result.push(current.trim().replace(/^"|"$/g, ''));
+      return result;
+    }
+
+    const rawHeaders = parseLine(lines[0]);
+    const headers = rawHeaders.map(h => h.toLowerCase().trim());
+
+    // Locate columns dynamically
+    let reqIdx = headers.findIndex(h => h.includes('context') || h.includes('req') || h.includes('sentence'));
+    let labelIdx = headers.findIndex(h => h.includes('detectedas') || h.includes('detected') || h.includes('label') || h.includes('verdict') || h.includes('actual'));
+
+    if (reqIdx === -1) reqIdx = 1;   // Default: Col 2 (Context)
+    if (labelIdx === -1) labelIdx = 3; // Default: Col 4 (DetectedAs)
+
     evalData = [];
     for (let i = 1; i < lines.length; i++) {
-      const row = lines[i].split(',');
-      if (row.length >= 2) {
-        const context = row[0].replace(/"/g, '').trim();
-        const detectedAs = row[1].replace(/"/g, '').trim();
-        evalData.push({ text: context, actual: detectedAs });
+      const row = parseLine(lines[i]);
+      if (row.length > reqIdx) {
+        let reqText = row[reqIdx] || '';
+        const rawLabel = row[labelIdx] !== undefined ? row[labelIdx] : '';
+
+        // Clean UTF-8 corruptions (e.g. â€™ -> ')
+        reqText = reqText
+          .replace(/â€™/g, "'")
+          .replace(/â€œ/g, '"')
+          .replace(/â€/g, '"')
+          .replace(/â/g, "'")
+          .trim();
+
+        if (reqText && reqText.length > 0) {
+          evalData.push({ text: reqText, actual: rawLabel });
+        }
       }
     }
 
-    document.getElementById('eval-file-info').textContent = `Loaded ${evalData.length} labeled test items.`;
+    document.getElementById('eval-file-info').textContent = 
+      `Loaded ${evalData.length} items using '${delimiter === '\t' ? 'TAB' : 'COMMA'}' delimiter. Reading from '${rawHeaders[reqIdx]}' & '${rawHeaders[labelIdx]}'.`;
   };
-  reader.readAsText(file);
+
+  reader.readAsText(file, 'UTF-8');
 }
 
 async function startLiveEvaluation(modelType) {
@@ -965,7 +1014,15 @@ async function startLiveEvaluation(modelType) {
 
   for (let i = 0; i < evalData.length; i++) {
     const item = evalData[i];
-    const actualNorm = item.actual.toLowerCase().includes('ambig') ? 'ambiguous' : 'clear';
+
+    // STRICT ACTUAL LABEL NORMALIZATION
+    const rawActualLower = String(item.actual).toLowerCase().trim();
+    let actualNorm = 'clear';
+    if (rawActualLower.includes('unambig') || rawActualLower.includes('clear')) {
+      actualNorm = 'clear';
+    } else if (rawActualLower.includes('ambig')) {
+      actualNorm = 'ambiguous';
+    }
 
     try {
       const res = await fetch(endpoint, {
@@ -974,8 +1031,31 @@ async function startLiveEvaluation(modelType) {
         body: JSON.stringify({ requirement: item.text })
       });
       const data = await res.json();
-      
-      const predictedNorm = data.verdict ? data.verdict.toLowerCase() : 'clear';
+
+      // STRICT PREDICTED LABEL NORMALIZATION
+      let rawPred = '';
+      if (data.verdict !== undefined) rawPred = String(data.verdict);
+      else if (data.is_ambiguous !== undefined) rawPred = data.is_ambiguous ? 'ambiguous' : 'clear';
+      else if (data.label !== undefined) rawPred = String(data.label);
+
+      const rawPredLower = rawPred.toLowerCase().trim();
+      let predictedNorm = 'clear';
+      if (rawPredLower.includes('unambig') || rawPredLower.includes('clear')) {
+        predictedNorm = 'clear';
+      } else if (rawPredLower.includes('ambig')) {
+        predictedNorm = 'ambiguous';
+      }
+
+      // EXTRACT REASONING / EXPLANATION
+      let reasoningText = 'No reasoning provided.';
+      if (Array.isArray(data.reasons) && data.reasons.length > 0) {
+        reasoningText = data.reasons.join(' ');
+      } else if (data.explanation) {
+        reasoningText = data.explanation;
+      } else if (data.reasoning) {
+        reasoningText = data.reasoning;
+      }
+
       const isMatch = actualNorm === predictedNorm;
 
       if (isMatch) correct++;
@@ -990,15 +1070,18 @@ async function startLiveEvaluation(modelType) {
       document.getElementById('eval-wrong-count').textContent = wrong;
       document.getElementById('eval-progress-bar').style.width = `${(totalProcessed / evalData.length) * 100}%`;
 
+      const confVal = data.confidence !== undefined ? (data.confidence * 100).toFixed(0) : 'N/A';
+
       const tr = document.createElement('tr');
       tr.style.backgroundColor = isMatch ? 'rgba(26, 127, 90, 0.08)' : 'rgba(204, 51, 51, 0.08)';
       tr.innerHTML = `
         <td>${i + 1}</td>
-        <td style="max-width:400px; word-break:break-word;">${item.text}</td>
-        <td><strong>${actualNorm.toUpperCase()}</strong></td>
-        <td><strong>${predictedNorm.toUpperCase()}</strong></td>
+        <td style="max-width:350px; word-break:break-word;">${esc(item.text)}</td>
+        <td><strong style="color: ${actualNorm === 'ambiguous' ? 'var(--accent)' : 'var(--llm)'}">${actualNorm.toUpperCase()}</strong></td>
+        <td><strong style="color: ${predictedNorm === 'ambiguous' ? 'var(--accent)' : 'var(--llm)'}">${predictedNorm.toUpperCase()}</strong></td>
         <td>${isMatch ? '✅ MATCH' : '❌ MISMATCH'}</td>
-        <td>${((data.confidence || 0) * 100).toFixed(0)}%</td>
+        <td>${confVal}%</td>
+        <td style="max-width:280px; font-size:12px; color:var(--muted); word-break:break-word;">${esc(reasoningText)}</td>
       `;
       tbody.prepend(tr);
 

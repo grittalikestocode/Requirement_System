@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Requirement Ambiguity Checker</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -486,19 +486,19 @@
     <div class="panel" id="eval-table-panel" style="display:none; margin-top:20px;">
       <h3>Predicted vs. Actual Table</h3>
       <div class="table-wrap visible" style="max-height:450px; overflow-y:auto;">
-        <table class="results-table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Requirement Text</th>
-              <th>Actual Label</th>
-              <th>Predicted Label</th>
-              <th>Status</th>
-              <th>Confidence</th>
-            </tr>
-          </thead>
-          <tbody id="eval-tbody"></tbody>
-        </table>
+        <table class="eval-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Requirement Text</th>
+            <th>Actual Label</th>
+            <th>Predicted Label</th>
+            <th>Status</th>
+            <th>Confidence</th>
+            <th>Reasoning</th> </tr>
+        </thead>
+        <tbody id="eval-tbody"></tbody>
+      </table>
       </div>
     </div>
 
