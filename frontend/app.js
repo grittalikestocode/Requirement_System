@@ -265,6 +265,7 @@ async function startBatch(tool) {
       <td class="tbl-req">${esc(req)}</td>
       <td><span class="spinner" style="width:12px;height:12px;border-width:1.5px"></span></td>
       <td>—</td>
+      ${tool === 'llm' ? '<td>—</td>' : ''}
       <td>—</td>`;
     tbody.appendChild(tr);
 
@@ -280,13 +281,14 @@ async function startBatch(tool) {
         <td class="tbl-req">${esc(req)}</td>
         <td><span class="tbl-pill ${data.verdict}">${data.verdict.toUpperCase()}</span></td>
         <td class="tbl-conf">${conf}%</td>
+        ${tool === 'llm' ? `<td>${esc(formatAmbiguityType(data.ambiguity_type))}</td>` : ''}
         <td style="font-size:12px;color:var(--muted);max-width:260px">${esc(exp)}</td>`;
     } catch (e) {
       state[tool].batchResults.push({ req, data: null });
       tr.innerHTML = `
         <td class="tbl-conf">${i + 1}</td>
         <td class="tbl-req">${esc(req)}</td>
-        <td colspan="3" style="color:var(--accent);font-family:var(--font-mono);font-size:11px">Error — backend unreachable</td>`;
+        <td colspan="${tool === 'llm' ? 4 : 3}" style="color:var(--accent);font-family:var(--font-mono);font-size:11px">Error — backend unreachable</td>`;
     }
 
     await sleep(300); // small delay to avoid overwhelming the backend
@@ -322,10 +324,14 @@ function exportCSV(tool) {
   const results = state[tool].batchResults;
   if (!results.length) return;
 
-  const headers = ['requirement', 'verdict', 'confidence', 'explanation'];
+  const headers = tool === 'llm'
+    ? ['requirement', 'verdict', 'confidence', 'ambiguity_type', 'explanation']
+    : ['requirement', 'verdict', 'confidence', 'explanation'];
   const rows = results.map(r => r.data
-    ? [r.req, r.data.verdict || '', Math.round((r.data.confidence || 0) * 100) + '%', (r.data.reasons || [])[0] || '']
-    : [r.req, 'error', '', '']
+    ? (tool === 'llm'
+        ? [r.req, r.data.verdict || '', Math.round((r.data.confidence || 0) * 100) + '%', formatAmbiguityType(r.data.ambiguity_type), (r.data.reasons || [])[0] || '']
+        : [r.req, r.data.verdict || '', Math.round((r.data.confidence || 0) * 100) + '%', (r.data.reasons || [])[0] || ''])
+    : (tool === 'llm' ? [r.req, 'error', '', '', ''] : [r.req, 'error', '', ''])
   );
 
   const csv = [headers, ...rows]
@@ -353,6 +359,9 @@ function showResult(id, data, tool) {
 function buildResultHTML(data, tool) {
   const conf      = Math.round((data.confidence || 0) * 100);
   const fillClass = data.verdict === 'ambiguous' ? 'ambiguous' : (tool === 'ml' ? 'ml' : '');
+  const ambiguityType = tool === 'llm'
+    ? `<div class="section-label">Ambiguity type</div><div class="ambiguity-type">${esc(formatAmbiguityType(data.ambiguity_type))}</div>`
+    : '';
   const reasons   = (data.reasons || [])
     .map(r => `<li style="font-size:14px;color:var(--muted);margin-bottom:4px;line-height:1.5">${esc(r)}</li>`)
     .join('');
@@ -361,9 +370,17 @@ function buildResultHTML(data, tool) {
     <span class="verdict-pill ${data.verdict}">${data.verdict === 'ambiguous' ? 'AMBIGUOUS' : 'CLEAR'}</span>
     <div class="conf-label"><span>Confidence</span><span>${conf}%</span></div>
     <div class="conf-track"><div class="conf-fill ${fillClass}" style="width:${conf}%"></div></div>
+    ${ambiguityType}
     ${reasons   ? `<div class="section-label">Reasoning</div><ul style="padding-left:16px;margin-top:4px">${reasons}</ul>` : ''}
     ${data.suggested_rewrite ? `<div class="section-label">Suggested rewrite</div><div class="rewrite-box">${esc(data.suggested_rewrite)}</div>` : ''}
   `;
+}
+
+function formatAmbiguityType(type) {
+  if (!type) return 'Not specified';
+  return String(type)
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, char => char.toUpperCase());
 }
 
 function errorHTML(msg) {
@@ -534,7 +551,7 @@ async function startCompareBatch() {
     tr.innerHTML = `
       <td class="tbl-conf">${i + 1}</td>
       <td class="tbl-req">${esc(req)}</td>
-      <td colspan="5" style="text-align:center">
+      <td colspan="6" style="text-align:center">
         <span class="spinner" style="width:12px;height:12px;border-width:1.5px"></span>
         Running both tools...
       </td>`;
@@ -555,6 +572,7 @@ async function startCompareBatch() {
     const llmVerdict  = llmData ? llmData.verdict : 'error';
     const mlVerdict   = mlData  ? mlData.verdict  : 'error';
     const llmConf     = llmData ? Math.round((llmData.confidence || 0) * 100) + '%' : '—';
+    const llmType     = llmData ? formatAmbiguityType(llmData.ambiguity_type) : '—';
     const mlConf      = mlData  ? Math.round((mlData.confidence  || 0) * 100) + '%' : '—';
 
     const agree       = llmData && mlData && llmVerdict === mlVerdict;
@@ -577,6 +595,7 @@ async function startCompareBatch() {
       <td class="tbl-req">${esc(req)}</td>
       <td>${llmPill}</td>
       <td class="tbl-conf">${llmConf}</td>
+      <td>${esc(llmType)}</td>
       <td>${mlPill}</td>
       <td class="tbl-conf">${mlConf}</td>
       <td>${agreeCell}</td>`;
@@ -615,7 +634,7 @@ function exportCompareCSV() {
 
   const headers = [
     'requirement',
-    'llm_verdict', 'llm_confidence', 'llm_explanation',
+    'llm_verdict', 'llm_confidence', 'llm_ambiguity_type', 'llm_explanation',
     'ml_verdict',  'ml_confidence',
     'agreement'
   ];
@@ -628,6 +647,7 @@ function exportCompareCSV() {
       r.req,
       llm ? llm.verdict    : 'error',
       llm ? Math.round((llm.confidence || 0) * 100) + '%' : '',
+      llm ? formatAmbiguityType(llm.ambiguity_type) : '',
       llm ? (llm.reasons || [])[0] || '' : '',
       ml  ? ml.verdict     : 'error',
       ml  ? Math.round((ml.confidence  || 0) * 100) + '%' : '',

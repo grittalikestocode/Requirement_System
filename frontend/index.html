@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Requirement Ambiguity Checker</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/style.css?v=2">
 </head>
 <body>
 
@@ -142,7 +142,7 @@
         </div>
         <div class="table-wrap" id="llm-table-wrap">
           <table class="results-table">
-            <thead><tr><th>#</th><th>Requirement</th><th>Verdict</th><th>Confidence</th><th>Explanation</th></tr></thead>
+            <thead><tr><th>#</th><th>Requirement</th><th>Verdict</th><th>Confidence</th><th>Ambiguity type</th><th>Explanation</th></tr></thead>
             <tbody id="llm-tbody"></tbody>
           </table>
         </div>
@@ -332,6 +332,7 @@
                 <th>Requirement</th>
                 <th>🧠 LLM Verdict</th>
                 <th>LLM Conf.</th>
+                <th>LLM Ambiguity Type</th>
                 <th>⚙️ ML Verdict</th>
                 <th>ML Conf.</th>
                 <th>Agreement</th>
@@ -447,6 +448,6 @@
   </div>
 </div>
 
-<script src="/static/app.js"></script>
+<script src="/static/app.js?v=2"></script>
 </body>
 </html>

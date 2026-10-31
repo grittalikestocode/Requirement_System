@@ -298,6 +298,18 @@ button:active { transform: scale(0.97); }
   margin-top: 4px;
 }
 
+.ambiguity-type {
+  display: inline-block;
+  margin: 2px 0 10px;
+  padding: 4px 9px;
+  border: 1px solid rgba(26,127,90,0.2);
+  border-radius: 4px;
+  background: rgba(26,127,90,0.06);
+  color: var(--llm);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
 /* Loading */
 .loading-state         { text-align: center; padding: 20px; font-family: var(--font-mono); font-size: 12px; color: var(--muted); display: none; }
 .loading-state.visible { display: block; }
